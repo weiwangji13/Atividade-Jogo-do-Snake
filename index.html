@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Jogo do Snake</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      text-align: center;
+      font-family: 'Times New Roman', Times, serif;
+    }
+
+    canvas {
+      background-color: palevioletred;
+      display: block;
+      margin: 20px auto;
+      border: 5px solid rgb(7, 7, 7);
+    
+    }
+
+    #painel-controle {
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    select, button {
+      padding: 5px 10px;
+      margin: 10px;
+    }
+
+    #pontuacao, #recorde {
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Jogo da Cobrinha</h1>
+
+  <canvas id="tela" width="400" height="400"></canvas>
+
+  <div id="painel-controle">
+    <label for="dificuldade">Dificuldade:</label>
+    <select id="dificuldade">
+      <option value="200">Fácil</option>
+      <option value="120">Médio</option>
+      <option value="70">Difícil</option>
+    </select>
+    <button onclick="iniciarJogo()">Iniciar Jogo</button>
+    <p>Pontuação: <span id="pontuacao">0</span></p>
+    <p>Recorde: <span id="recorde">0</span></p>
+  </div>
+
+  
+  <audio id="musica" src="Crypta - Trial of Traitors (Instrumental).mp3" loop></audio>
+ 
+  <script>
+  const tela = document.getElementById("tela");
+  const contexto = tela.getContext("2d");
+  const tamanhoBloco = 20;
+  const totalBlocos = tela.width / tamanhoBloco;
+
+  const musica = document.getElementById("musica");
+
+  let cobrinha = [];
+  let direção = "direita";
+  let comida = {};
+  let intervalo;
+  let pontuacao = 0;
+  let recorde = parseInt(localStorage.getItem("recorde")) || 0;
+  document.getElementById("recorde").innerText = recorde;
+
+  
+  function criarComida() {
+    comida = {
+      x: Math.floor(Math.random() * totalBlocos),
+      y: Math.floor(Math.random() * totalBlocos),
+    };
+  }
+
+  function desenharCenario() {
+    contexto.fillStyle = "palevioletred";
+    contexto.fillRect(0, 0, tela.width, tela.height);
+  }
+
+  function desenharCobrinha() {
+    for (let parte of cobrinha) {
+      contexto.fillStyle = "black";
+      contexto.fillRect(
+        parte.x * tamanhoBloco,
+        parte.y * tamanhoBloco,
+        tamanhoBloco,
+        tamanhoBloco
+      );
+    }
+  }
+
+  function desenharComida() {
+    contexto.fillStyle = "red";
+    contexto.fillRect(
+      comida.x * tamanhoBloco,
+      comida.y * tamanhoBloco,
+      tamanhoBloco,
+      tamanhoBloco
+    );
+  }
+
+  function atualizarJogo() {
+    let cabeca = { x: cobrinha[0].x, y: cobrinha[0].y };
+
+    if (direção === "direita") cabeca.x++;
+    else if (direção === "esquerda") cabeca.x--;
+    else if (direção === "cima") cabeca.y--;
+    else if (direção === "baixo") cabeca.y++;
+
+   
+    if (
+      cabeca.x < 0 || cabeca.x >= totalBlocos ||
+      cabeca.y < 0 || cabeca.y >= totalBlocos
+    ) {
+      fimDeJogo();
+      return;
+    }
+
+    
+    for (let parte of cobrinha) {
+      if (parte.x === cabeca.x && parte.y === cabeca.y) {
+        fimDeJogo();
+        return;
+      }
+    }
+
+    cobrinha.unshift(cabeca);
+
+    
+    if (cabeca.x === comida.x && cabeca.y === comida.y) {
+      pontuacao++;
+      document.getElementById("pontuacao").innerText = pontuacao;
+
+      if (pontuacao > recorde) {
+        recorde = pontuacao;
+        localStorage.setItem("recorde", recorde);
+        document.getElementById("recorde").innerText = recorde;
+      }
+
+      criarComida(); 
+    } else {
+      cobrinha.pop(); 
+    }
+
+    desenharCenario();
+    desenharCobrinha();
+    desenharComida();
+  }
+
+  function iniciarJogo() {
+    cobrinha = [{ x: 5, y: 5 }];
+    direção = "direita";
+    pontuacao = 0;
+    document.getElementById("pontuacao").innerText = pontuacao;
+
+    criarComida(); 
+    clearInterval(intervalo);
+    let velocidade = parseInt(document.getElementById("dificuldade").value);
+    intervalo = setInterval(atualizarJogo, velocidade);
+
+    musica.play();
+  }
+
+  function fimDeJogo() {
+    clearInterval(intervalo);
+    musica.pause();
+    musica.currentTime = 0;
+    alert("Fim de jogo! Pontuação: " + pontuacao);
+  }
+
+  
+  document.addEventListener("keydown", function (evento) {
+    if (evento.key === "ArrowUp" && direção !== "baixo") direção = "cima";
+    else if (evento.key === "ArrowDown" && direção !== "cima") direção = "baixo";
+    else if (evento.key === "ArrowLeft" && direção !== "direita") direção = "esquerda";
+    else if (evento.key === "ArrowRight" && direção !== "esquerda") direção = "direita";
+  });
+</script>
+
+</body>
+</html>
